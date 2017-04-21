@@ -1,0 +1,2 @@
+javac -cp . ctf/agent/*Agent.java
+java -cp . ctf.environment.TestPlaySurface
