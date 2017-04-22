@@ -15,6 +15,12 @@ import java.util.PriorityQueue;
  */
 public class txp150530Agent extends Agent {
 
+    /**
+     * W = wall
+     * . = open space
+     * H = home base
+     * E = enemy base
+     */
     static char[][] board;
     static txp150530Agent attacker;
     static txp150530Agent defender;
@@ -48,6 +54,14 @@ public class txp150530Agent extends Agent {
         }
 
         if (isDefender) {
+            if (board != null) {
+                for (char[] ar : board) {
+                    System.out.println(ar);
+                }
+                System.out.println();
+            } else {
+                System.out.println("board null");
+            }
             return defGetMove(env);
         } else {
             return attGetMove(env);
@@ -88,8 +102,10 @@ public class txp150530Agent extends Agent {
                     for (int i = 0; i < preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[i][1] = preKnownWalls.get(i) ? 'W' : '.';
+                            board[i][0] = '.';
                         } else {
                             board[i][size-2] = preKnownWalls.get(i) ? 'W' : '.';
+                            board[i][size-1] = '.';
                         }
                     }
                     if (baseOnLeft) {
@@ -102,8 +118,10 @@ public class txp150530Agent extends Agent {
                     for (int i = 0; i < attacker.preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[size-i-1][1] = attacker.preKnownWalls.get(i) ? 'W' : '.';
+                            board[size-i-1][0] = '.';
                         } else {
                             board[size-i-1][size-2] = attacker.preKnownWalls.get(i) ? 'W' : '.';
+                            board[size-i-1][size-1] = '.';
                         }
                     }
                     attacker.attDidWaitForDef = true;
@@ -140,10 +158,15 @@ public class txp150530Agent extends Agent {
         } else if (!defDidWaitForAtt) {
             return AgentAction.DO_NOTHING;
         } else if (!didPlaceInitialMine) {
+            board[rowPos][colPos] = 'M';
             didPlaceInitialMine = true;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         } else if (!defDidMoveToFlagFront) {
-
+            if (baseOnLeft) {
+                return pathTo(homeBaseRow, homeBaseCol + 1);
+            } else {
+                return pathTo(homeBaseRow, homeBaseCol - 1);
+            }
         }
         return AgentAction.DO_NOTHING;
     }
@@ -168,8 +191,10 @@ public class txp150530Agent extends Agent {
                     for (int i = 0; i < defender.preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[i][1] = defender.preKnownWalls.get(i) ? 'W' : '.';
+                            board[i][0] = '.';
                         } else {
                             board[i][size - 2] = defender.preKnownWalls.get(i) ? 'W' : '.';
+                            board[i][size - 1] = '.';
                         }
                     }
                     if (baseOnLeft) {
@@ -182,8 +207,10 @@ public class txp150530Agent extends Agent {
                     for (int i = 0; i < preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[size - i - 1][1] = preKnownWalls.get(i) ? 'W' : '.';
+                            board[size - i - 1][0] = '.';
                         } else {
                             board[size - i - 1][size - 2] = preKnownWalls.get(i) ? 'W' : '.';
+                            board[size - i - 1][size - 1] = '.';
                         }
                     }
                     attDidWaitForDef = true;
@@ -220,29 +247,84 @@ public class txp150530Agent extends Agent {
         } else if (!attDidWaitForDef) {
             return AgentAction.DO_NOTHING;
         } else if (!didPlaceInitialMine) {
+            board[rowPos][colPos] = 'M';
             didPlaceInitialMine = true;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         } else if (!attDidMoveToEnemyBase) {
-
+            return pathTo(enemyBaseRow, enemyBaseCol);
         }
 
         return AgentAction.DO_NOTHING;
     }
 
-    private int pathTo(int r, int c, int destR, int destC) {
-        State startState = new State(r, c, 0);
+    private int pathTo(int destR, int destC) {
+        int[][] best = new int[board.length][board.length];
+        for (int i = 0; i < best.length; i++){
+            Arrays.fill(best[i], 1000);
+        }
+        State startState = new State(rowPos, colPos, 0);
+        State endState = null;
         PriorityQueue<State> queue = new PriorityQueue<>();
         queue.add(startState);
         while (!queue.isEmpty()) {
             State curr = queue.remove();
-//            if (curr.)
+            if (curr.count >= best[curr.r][curr.c]) {
+                continue;
+            }
+            best[curr.r][curr.c] = curr.count;
+            if (curr.r == destR && curr.c == destC) {
+                endState = curr;
+            }
+            if (inBounds(curr.r-1, curr.c, board) && board[curr.r-1][curr.c] != 'W'
+                    && board[curr.r-1][curr.c] != 'M' && board[curr.r-1][curr.c] != 'H') {
+                State next = new State(curr.r-1, curr.c, curr.count+1);
+                next.prev = curr;
+                queue.add(next);
+            }
+            if (inBounds(curr.r+1, curr.c, board) && board[curr.r+1][curr.c] != 'W'
+                    && board[curr.r+1][curr.c] != 'M' && board[curr.r+1][curr.c] != 'H') {
+                State next = new State(curr.r+1, curr.c, curr.count+1);
+                next.prev = curr;
+                queue.add(next);
+            }
+            if (inBounds(curr.r, curr.c-1, board) && board[curr.r][curr.c-1] != 'W'
+                    && board[curr.r][curr.c-1] != 'M' && board[curr.r][curr.c-1] != 'H') {
+                State next = new State(curr.r, curr.c-1, curr.count+1);
+                next.prev = curr;
+                queue.add(next);
+            }
+            if (inBounds(curr.r, curr.c+1, board) && board[curr.r][curr.c+1] != 'W'
+                    && board[curr.r][curr.c+1] != 'M' && board[curr.r][curr.c+1] != 'H') {
+                State next = new State(curr.r, curr.c+1, curr.count+1);
+                next.prev = curr;
+                queue.add(next);
+            }
         }
-        return 1;
+        if (endState == null) {
+            return AgentAction.DO_NOTHING;
+        }
+        while (endState.prev != null && endState.prev.prev != null) {
+            endState = endState.prev;
+        }
+        if (endState.r > startState.r) {
+            return AgentAction.MOVE_SOUTH;
+        } else if (endState.r < startState.r) {
+            return AgentAction.MOVE_NORTH;
+        } else if (endState.c < startState.c) {
+            return AgentAction.MOVE_WEST;
+        } else {
+            return AgentAction.MOVE_EAST;
+        }
+    }
+
+    private boolean inBounds(int r, int c, char[][] mat) {
+        return r >= 0 && r < mat.length && c >= 0 && c < mat[r].length;
     }
 
     private class State implements Comparable<State> {
 
         int r, c, count;
+        State prev;
 
         public State(int r, int c, int cnt) {
             this.r = r;
