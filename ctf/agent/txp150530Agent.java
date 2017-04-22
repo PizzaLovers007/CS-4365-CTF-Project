@@ -26,6 +26,7 @@ public class txp150530Agent extends Agent {
     static txp150530Agent defender;
     static int homeBaseRow, homeBaseCol;
     static int enemyBaseRow, enemyBaseCol;
+	static int maxSteps;
 
     // Both
     int rowPos, colPos;
@@ -34,6 +35,7 @@ public class txp150530Agent extends Agent {
     boolean baseOnLeft;
     boolean didPlaceInitialMine;
     ArrayList<Boolean> preKnownWalls = new ArrayList<>();  // Used when board size is not known
+	int agentSteps; //Keeps track of the number of steps
 
     // Defender
     // Move down -> wait for attacker -> place mine -> move to front of flag -> wait until flag gets taken
@@ -48,6 +50,11 @@ public class txp150530Agent extends Agent {
         board = null;
     }
 
+	/**
+	 * Gets the type of move the agent is going to take
+	 * @param env Interface for the agent environment
+	 * @return integer of move type
+	 */
     public int getMove(AgentEnvironment env) {
         if (!didAssignStrategy) {
             assignStrat(env);
@@ -68,6 +75,11 @@ public class txp150530Agent extends Agent {
         }
     }
 
+	
+	/**
+	 * Assigns the agent a strategy depending on where it is originally placed
+	 * @param env Interface for the agent environment
+	 */
     private void assignStrat(AgentEnvironment env) {
         if (env.isAgentSouth(AgentEnvironment.OUR_TEAM, false)) {
             isDefender = true;
@@ -81,6 +93,11 @@ public class txp150530Agent extends Agent {
         }
     }
 
+	/**
+	 * Gets the type of move the defender is going to make
+	 * @param env Interface for the agent environment
+	 * @return integer of move type
+	 */
     public int defGetMove(AgentEnvironment env) {
         if (!defDidMoveDown) {
             // Get if object directly to left/right
@@ -96,6 +113,7 @@ public class txp150530Agent extends Agent {
                     System.out.println("Creating board from defender move");
                     int size = preKnownWalls.size() + attacker.preKnownWalls.size() + 1;
                     board = new char[size][size];
+					maxSteps = size * size * 2;
                     for (char[] ar : board) {
                         Arrays.fill(ar, '?');
                     }
@@ -148,18 +166,23 @@ public class txp150530Agent extends Agent {
                         enemyBaseCol = board.length-1;
                     }
 
+					agentSteps++;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 } else {
+					agentSteps++;
                     return AgentAction.DO_NOTHING;
                 }
             }
-
+			
+			agentSteps++;
             return AgentAction.MOVE_SOUTH;
         } else if (!defDidWaitForAtt) {
+			agentSteps++;
             return AgentAction.DO_NOTHING;
         } else if (!didPlaceInitialMine) {
             board[rowPos][colPos] = 'M';
             didPlaceInitialMine = true;
+			agentSteps++;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         } else if (!defDidMoveToFlagFront) {
             if (baseOnLeft) {
@@ -168,9 +191,15 @@ public class txp150530Agent extends Agent {
                 return pathTo(homeBaseRow, homeBaseCol - 1);
             }
         }
+		agentSteps++;
         return AgentAction.DO_NOTHING;
     }
 
+	/**
+	 * Gets the type of move the attacker is going to make
+	 * @param env Interface for the agent environment
+	 * @return integer of move type
+	 */
     public int attGetMove(AgentEnvironment env) {
         if (!attDidMoveUp) {
             if (baseOnLeft) {
@@ -320,6 +349,64 @@ public class txp150530Agent extends Agent {
     private boolean inBounds(int r, int c, char[][] mat) {
         return r >= 0 && r < mat.length && c >= 0 && c < mat[r].length;
     }
+	
+	private void update(AgentEnvironment env) {
+		if(env.isObstacleNorthImmediate()) {
+			board[rowPos][colPos-1] = 'W';
+		}
+		else {
+			board[rowPos][colPos-1] = '.';
+		}
+		if(env.isObstacleSouthImmediate()) {
+			board[rowPos][colPos+1] = 'W';
+		}
+		else {
+			board[rowPos][colPos+1] = '.';
+		}
+		if(env.isObstacleEastImmediate()) {
+			board[rowPos-1][colPos] = 'W';
+		}
+		else {
+			board[rowPos-1][colPos] = '.';
+		}
+		if(env.isObstacleWestImmediate()) {
+			board[rowPos+1][colPos] = 'W';
+		}
+		else {
+			board[rowPos+1][colPos] = '.';
+		}
+	}
+	
+	private void hasDied(AgentEnvironment env) {
+		if(baseOnLeft) {
+			if(isDefender) {
+				if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && env.isObstacleNorthImmediate() && env.isObstacleWestImmediate()) {
+					rowPos = 0;
+					colPos = 0;
+				}
+			}
+			else {
+				if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && env.isObstacleSouthImmediate() && env.isObstacleWestImmediate()) {
+					rowPos = board.length - 1;
+					colPos = 0;
+				}
+			}
+		}
+		else {
+			if(isDefender) {
+				if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) &&env.isObstacleNorthImmediate() && env.isObstacleEastImmediate()) {
+					rowPos = 0;
+					colPos = board.length - 1;
+				}
+			}
+			else {
+				if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && env.isObstacleSouthImmediate() && env.isObstacleEastImmediate()) {
+					rowPos = board.length - 1;
+					colPos = board.length - 1;
+				}
+			}
+		}
+	}
 
     private class State implements Comparable<State> {
 
