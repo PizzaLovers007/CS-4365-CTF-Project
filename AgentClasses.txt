@@ -1,5 +1,6 @@
-4
+5
 ctf.agent.SimpleAgent
 ctf.agent.RandomAgent
 ctf.agent.BomberAgent
-ctf.agent.txp150530Agent
+ctf.agent.txp150530sxp150830Agent
+ctf.agent.txp150530sxp150830CopyAgent
