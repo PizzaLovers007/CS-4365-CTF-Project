@@ -1,11 +1,13 @@
 package ctf.agent;
 
 
-import ctf.common.AgentAction;
 import ctf.common.AgentEnvironment;
+
+import ctf.common.AgentAction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 /**
@@ -24,7 +26,7 @@ public class txp150530sxp150830CopyAgent extends Agent {
     static txp150530sxp150830CopyAgent defender;
     static int homeBaseRow, homeBaseCol;
     static int enemyBaseRow, enemyBaseCol;
-	static int maxSteps;
+    static int maxSteps;
 
     // Both
     int rowPos, colPos;
@@ -34,8 +36,9 @@ public class txp150530sxp150830CopyAgent extends Agent {
     boolean didPlaceInitialMine;
     boolean hunting;
     boolean ignoreMines;
+    boolean justPlantedMine;
     ArrayList<Boolean> preKnownWalls = new ArrayList<>();  // Used when board size is not known
-	int agentSteps; //Keeps track of the number of steps
+    int agentSteps; //Keeps track of the number of steps
 
     // Defender
     // Move down -> wait for attacker -> place mine -> move to front of flag -> wait until flag gets taken
@@ -44,8 +47,9 @@ public class txp150530sxp150830CopyAgent extends Agent {
 
     // Attacker
     // Move up -> wait for defender -> place mine -> move to enemy base -> run back while placing mines
-    boolean attDidMoveUp, attDidWaitForDef, attDidMoveToEnemyBase;
+    boolean attDidMoveUp, attDidWaitForDef, attDidMoveToEnemyBase, attDidPlaceMineLast;
     boolean attStuck;
+    LinkedList<int[]> previous = new LinkedList<>();
 
     public txp150530sxp150830CopyAgent() {
         // Dereference the board when the game is reset, prevents old data
@@ -54,11 +58,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
         defender = null;
     }
 
-	/**
-	 * Gets the type of move the agent is going to take
-	 * @param env Interface for the agent environment
-	 * @return integer of move type
-	 */
+    /**
+     * Gets the type of move the agent is going to take
+     * @param env Interface for the agent environment
+     * @return integer of move type
+     */
     public int getMove(AgentEnvironment env) {
         if (!didAssignStrategy) {
             assignStrat(env);
@@ -79,11 +83,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
         }
     }
 
-	
-	/**
-	 * Assigns the agent a strategy depending on where it is originally placed
-	 * @param env Interface for the agent environment
-	 */
+
+    /**
+     * Assigns the agent a strategy depending on where it is originally placed
+     * @param env Interface for the agent environment
+     */
     private void assignStrat(AgentEnvironment env) {
         if (env.isAgentSouth(AgentEnvironment.OUR_TEAM, false)) {
             isDefender = true;
@@ -97,16 +101,16 @@ public class txp150530sxp150830CopyAgent extends Agent {
         }
     }
 
-	/**
-	 * Gets the type of move the defender is going to make
-	 * @param env Interface for the agent environment
-	 * @return integer of move type
-	 */
+    /**
+     * Gets the type of move the defender is going to make
+     * @param env Interface for the agent environment
+     * @return integer of move type
+     */
     public int defGetMove(AgentEnvironment env) {
         System.out.printf("%s %s %s %s%n", defDidMoveDown, didPlaceInitialMine, defDidWaitForAtt, defDidMoveToFlagFront);
         agentSteps++;
 
-        if (agentSteps >= maxSteps/2) {
+        if (board != null && agentSteps >= maxSteps/2) {
             hunting = true;
         }
 
@@ -120,9 +124,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
             } else if (!env.isObstacleWestImmediate() && !env.isBaseWest(AgentEnvironment.OUR_TEAM, true)) {
                 colPos--;
                 return AgentAction.MOVE_WEST;
-            } else {
+            } else if (!justPlantedMine) {
+                justPlantedMine = true;
                 return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
             }
+            return AgentAction.DO_NOTHING;
         } else if (env.isAgentSouth(AgentEnvironment.OUR_TEAM, true)) {
             if (!env.isObstacleEastImmediate() && !env.isBaseEast(AgentEnvironment.OUR_TEAM, true)) {
                 colPos++;
@@ -133,9 +139,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
             } else if (!env.isObstacleWestImmediate() && !env.isBaseWest(AgentEnvironment.OUR_TEAM, true)) {
                 colPos--;
                 return AgentAction.MOVE_WEST;
-            } else {
+            } else if (!justPlantedMine) {
+                justPlantedMine = true;
                 return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
             }
+            return AgentAction.DO_NOTHING;
         } else if (env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
             if (!env.isObstacleNorthImmediate() && !env.isBaseNorth(AgentEnvironment.OUR_TEAM, true)) {
                 rowPos--;
@@ -146,9 +154,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
             } else if (!env.isObstacleWestImmediate() && !env.isBaseWest(AgentEnvironment.OUR_TEAM, true)) {
                 colPos--;
                 return AgentAction.MOVE_WEST;
-            } else {
+            } else if (!justPlantedMine) {
+                justPlantedMine = true;
                 return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
             }
+            return AgentAction.DO_NOTHING;
         } else if (env.isAgentWest(AgentEnvironment.OUR_TEAM, true)) {
             if (!env.isObstacleEastImmediate() && !env.isBaseEast(AgentEnvironment.OUR_TEAM, true)) {
                 colPos++;
@@ -159,9 +169,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
             } else if (!env.isObstacleNorthImmediate() && !env.isBaseNorth(AgentEnvironment.OUR_TEAM, true)) {
                 rowPos--;
                 return AgentAction.MOVE_NORTH;
-            } else {
+            } else if (!justPlantedMine) {
+                justPlantedMine = true;
                 return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
             }
+            return AgentAction.DO_NOTHING;
         }
 
         if (!defDidMoveDown) {
@@ -178,7 +190,7 @@ public class txp150530sxp150830CopyAgent extends Agent {
                     System.out.println("Creating board from defender move");
                     int size = preKnownWalls.size() + attacker.preKnownWalls.size() + 1;
                     board = new char[size][size];
-					maxSteps = size * size * 2;
+                    maxSteps = size * size * 2;
                     for (char[] ar : board) {
                         Arrays.fill(ar, '?');
                     }
@@ -232,34 +244,75 @@ public class txp150530sxp150830CopyAgent extends Agent {
                     }
 
                     board[rowPos][colPos] = 'M';
+                    justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 } else {
                     return AgentAction.DO_NOTHING;
                 }
             }
-			
+
             return AgentAction.MOVE_SOUTH;
         }
-        if (hasDied(env) && didPlaceInitialMine) {
+
+        if (hasDied(env)) {
+            System.out.println("Defender died!");
             defDidMoveToFlagFront = false;
         }
         update(env);
+        if (!validate(env)) {
+            if (!justPlantedMine) {
+                justPlantedMine = true;
+                return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
+            }
+            justPlantedMine = false;
+            return AgentAction.DO_NOTHING;
+        }
+
+        previous.add(new int[]{rowPos, colPos});
+        if (previous.size() > board.length) {
+            previous.remove();
+        }
         if (!defDidWaitForAtt) {
             return AgentAction.DO_NOTHING;
         } else if (!didPlaceInitialMine) {
             board[rowPos][colPos] = 'M';
             didPlaceInitialMine = true;
+            justPlantedMine = true;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         } else if (env.hasFlag()) {
             return tryMove(env, homeBaseRow, homeBaseCol);
         } else if (env.hasFlag(AgentEnvironment.ENEMY_TEAM)) {
-            return tryMove(env, enemyBaseRow, enemyBaseCol);
+            ignoreMines = false;
+            if (board[enemyBaseRow][enemyBaseCol] != 'M') {
+                return tryMove(env, enemyBaseRow, enemyBaseCol);
+            } else if (baseOnLeft) {
+                return tryMove(env, homeBaseRow, homeBaseCol+1);
+            } else {
+                return tryMove(env, homeBaseRow, homeBaseCol-1);
+            }
         } else if (env.hasFlag(AgentEnvironment.OUR_TEAM)) {
             ignoreMines = true;
             if (board[homeBaseRow-1][homeBaseCol] == 'M') {
                 return tryMove(env, homeBaseRow - 1, homeBaseCol);
             }
-            return tryMove(env, enemyBaseRow, enemyBaseCol);
+            ignoreMines = false;
+//            return tryMove(env, enemyBaseRow, enemyBaseCol);
+            int move;
+            if (baseOnLeft) {
+                move = tryMove(env, homeBaseRow, homeBaseCol+1);
+                if (rowPos == homeBaseRow && colPos == homeBaseCol+1) {
+                    return move;
+                }
+            } else {
+                move = tryMove(env, homeBaseRow, homeBaseCol-1);
+                if (rowPos == homeBaseRow && colPos == homeBaseCol-1) {
+                    return move;
+                }
+            }
+            if (move == AgentAction.DO_NOTHING) {
+                return tryMove(env, Math.max(homeBaseRow+2, board.length-1), homeBaseCol);
+            }
+            return move;
         } else if (!defDidMoveToFlagFront) {
             int move;
             if (baseOnLeft) {
@@ -285,6 +338,13 @@ public class txp150530sxp150830CopyAgent extends Agent {
         } else if (!hunting) {
             if (attacker.attStuck) {
                 return tryMove(env, enemyBaseRow, enemyBaseCol);
+            }
+            if (env.isAgentNorth(AgentEnvironment.ENEMY_TEAM, true)
+                    || env.isAgentEast(AgentEnvironment.ENEMY_TEAM, true)
+                    || env.isAgentSouth(AgentEnvironment.ENEMY_TEAM, true)
+                    || env.isAgentWest(AgentEnvironment.ENEMY_TEAM, true)) {
+                justPlantedMine = true;
+                return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
             }
             if (baseOnLeft) {
                 return tryMove(env, homeBaseRow, homeBaseCol + 1);
@@ -312,13 +372,14 @@ public class txp150530sxp150830CopyAgent extends Agent {
         }
     }
 
-	/**
-	 * Gets the type of move the attacker is going to make
-	 * @param env Interface for the agent environment
-	 * @return integer of move type
-	 */
+    /**
+     * Gets the type of move the attacker is going to make
+     * @param env Interface for the agent environment
+     * @return integer of move type
+     */
     public int attGetMove(AgentEnvironment env) {
         System.out.printf("%s %s %s %s%n", attDidMoveUp, attDidWaitForDef, didPlaceInitialMine, attDidMoveToEnemyBase);
+        agentSteps++;
 
         if (env.hasFlag(AgentEnvironment.OUR_TEAM) && !env.hasFlag()) {
             if (env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
@@ -331,9 +392,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
                 } else if (!env.isObstacleWestImmediate() && !env.isBaseWest(AgentEnvironment.OUR_TEAM, true)) {
                     colPos--;
                     return AgentAction.MOVE_WEST;
-                } else {
+                } else if (!justPlantedMine) {
+                    justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 }
+                return AgentAction.DO_NOTHING;
             } else if (env.isAgentSouth(AgentEnvironment.OUR_TEAM, true)) {
                 if (!env.isObstacleEastImmediate() && !env.isBaseEast(AgentEnvironment.OUR_TEAM, true)) {
                     colPos++;
@@ -344,9 +407,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
                 } else if (!env.isObstacleWestImmediate() && !env.isBaseWest(AgentEnvironment.OUR_TEAM, true)) {
                     colPos--;
                     return AgentAction.MOVE_WEST;
-                } else {
+                } else if (!justPlantedMine) {
+                    justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 }
+                return AgentAction.DO_NOTHING;
             } else if (env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
                 if (!env.isObstacleNorthImmediate() && !env.isBaseNorth(AgentEnvironment.OUR_TEAM, true)) {
                     rowPos--;
@@ -357,9 +422,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
                 } else if (!env.isObstacleWestImmediate() && !env.isBaseWest(AgentEnvironment.OUR_TEAM, true)) {
                     colPos--;
                     return AgentAction.MOVE_WEST;
-                } else {
+                } else if (!justPlantedMine) {
+                    justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 }
+                return AgentAction.DO_NOTHING;
             } else if (env.isAgentWest(AgentEnvironment.OUR_TEAM, true)) {
                 if (!env.isObstacleEastImmediate() && !env.isBaseEast(AgentEnvironment.OUR_TEAM, true)) {
                     colPos++;
@@ -370,9 +437,11 @@ public class txp150530sxp150830CopyAgent extends Agent {
                 } else if (!env.isObstacleNorthImmediate() && !env.isBaseNorth(AgentEnvironment.OUR_TEAM, true)) {
                     rowPos--;
                     return AgentAction.MOVE_NORTH;
-                } else {
+                } else if (!justPlantedMine) {
+                    justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 }
+                return AgentAction.DO_NOTHING;
             }
         }
 
@@ -389,6 +458,7 @@ public class txp150530sxp150830CopyAgent extends Agent {
                     System.out.println("Creating board from attacker move");
                     int size = defender.preKnownWalls.size() + preKnownWalls.size() + 1;
                     board = new char[size][size];
+                    maxSteps = size * size * 2;
                     for (char[] ar : board) {
                         Arrays.fill(ar, '?');
                     }
@@ -403,10 +473,10 @@ public class txp150530sxp150830CopyAgent extends Agent {
                     }
                     if (baseOnLeft) {
                         board[defender.preKnownWalls.size()][0] = 'H';
-                        board[defender.preKnownWalls.size()][size - 1] = 'E';
+                        board[defender.preKnownWalls.size()][size - 1] = 'F';
                     } else {
                         board[defender.preKnownWalls.size()][size - 1] = 'H';
-                        board[defender.preKnownWalls.size()][0] = 'E';
+                        board[defender.preKnownWalls.size()][0] = 'F';
                     }
                     for (int i = 0; i < preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
@@ -442,6 +512,7 @@ public class txp150530sxp150830CopyAgent extends Agent {
                     }
 
                     board[rowPos][colPos] = 'M';
+                    justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
                 } else {
                     return AgentAction.DO_NOTHING;
@@ -450,34 +521,87 @@ public class txp150530sxp150830CopyAgent extends Agent {
 
             return AgentAction.MOVE_NORTH;
         }
-        if (hasDied(env) && didPlaceInitialMine) {
+
+        if (hasDied(env)) {
+            System.out.println("Attacker died!");
             attDidMoveToEnemyBase = false;
             defender.defDidMoveToFlagFront = false;
+            previous.clear();
         }
         update(env);
+        if (!validate(env)) {
+            if (!justPlantedMine) {
+                justPlantedMine = true;
+                return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
+            }
+            justPlantedMine = false;
+            return AgentAction.DO_NOTHING;
+        }
+
+        if (!attDidMoveToEnemyBase) {
+            previous.add(new int[]{rowPos, colPos});
+            if (previous.size() > board.length/3) {
+                previous.remove();
+            }
+        }
         if (!attDidWaitForDef) {
             return AgentAction.DO_NOTHING;
         } else if (!didPlaceInitialMine) {
             board[rowPos][colPos] = 'M';
             didPlaceInitialMine = true;
+            justPlantedMine = true;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         } else if (!attDidMoveToEnemyBase) {
             int move = tryMove(env, enemyBaseRow, enemyBaseCol);
             if (rowPos == enemyBaseRow && colPos == enemyBaseCol) {
                 attDidMoveToEnemyBase = true;
+                attDidPlaceMineLast = false;
+                return move;
             }
             if (move == AgentAction.DO_NOTHING) {
                 attStuck = true;
+                return move;
             }
             attStuck = false;
             return move;
+        } else if (!attDidPlaceMineLast) {
+            board[rowPos][colPos] = 'M';
+            attDidPlaceMineLast = true;
+            justPlantedMine = true;
+            return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         } else {
-            int move = tryMove(env, homeBaseRow, homeBaseCol);
-            if (move == AgentAction.DO_NOTHING) {
-                move = tryMove(env, Math.max(0, homeBaseRow-2), homeBaseCol);
+            if (!env.hasFlag()) {
+                attDidMoveToEnemyBase = false;
+                attDidPlaceMineLast = false;
+                return AgentAction.DO_NOTHING;
+            }
+            int move;
+            if (previous.isEmpty()) {
+                move = tryMove(env, homeBaseRow, homeBaseCol);
                 if (move == AgentAction.DO_NOTHING) {
-                    attStuck = true;
+                    move = tryMove(env, Math.max(0, homeBaseRow - 2), homeBaseCol);
+                    if (move == AgentAction.DO_NOTHING) {
+                        attStuck = true;
+                    }
                 }
+            } else {
+                int[] lastMove = previous.removeLast();
+                if (lastMove[0] < rowPos && !env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
+                    rowPos--;
+                    move = AgentAction.MOVE_NORTH;
+                } else if (lastMove[0] > rowPos && !env.isAgentSouth(AgentEnvironment.OUR_TEAM, true)) {
+                    rowPos++;
+                    move = AgentAction.MOVE_SOUTH;
+                } else if (lastMove[1] < colPos && !env.isAgentWest(AgentEnvironment.OUR_TEAM, true)) {
+                    colPos--;
+                    move = AgentAction.MOVE_WEST;
+                } else if (lastMove[1] > colPos && !env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
+                    colPos++;
+                    move = AgentAction.MOVE_EAST;
+                } else {
+                    move = AgentAction.DO_NOTHING;
+                }
+                attDidPlaceMineLast = false;
             }
             attStuck = false;
             return move;
@@ -487,8 +611,8 @@ public class txp150530sxp150830CopyAgent extends Agent {
     private int tryMove(AgentEnvironment env, int destR, int destC) {
         char defTemp = board[defender.rowPos][defender.colPos];
         char attTemp = board[attacker.rowPos][attacker.colPos];
-        board[attacker.rowPos][attacker.colPos] = 'W';
-        board[defender.rowPos][defender.colPos] = 'W';
+        board[attacker.rowPos][attacker.colPos] = 'P';
+        board[defender.rowPos][defender.colPos] = 'P';
         int e1r = -1, e1c = -1, e2r = -1, e2c = -1;
         char e1temp = '.', e2temp = '.';
         if (env.isAgentNorth(AgentEnvironment.ENEMY_TEAM, true)) {
@@ -553,13 +677,29 @@ public class txp150530sxp150830CopyAgent extends Agent {
         board[defender.rowPos][defender.colPos] = defTemp;
 
         if (move == AgentAction.MOVE_NORTH) {
-            rowPos--;
+            if (env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
+                return AgentAction.DO_NOTHING;
+            } else {
+                rowPos--;
+            }
         } else if (move == AgentAction.MOVE_EAST) {
-            colPos++;
+            if (env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
+                return AgentAction.DO_NOTHING;
+            } else {
+                colPos++;
+            }
         } else if (move == AgentAction.MOVE_SOUTH) {
-            rowPos++;
+            if (env.isAgentSouth(AgentEnvironment.OUR_TEAM, true)) {
+                return AgentAction.DO_NOTHING;
+            } else {
+                rowPos++;
+            }
         } else if (move == AgentAction.MOVE_WEST) {
-            colPos--;
+            if (env.isAgentWest(AgentEnvironment.OUR_TEAM, true)) {
+                return AgentAction.DO_NOTHING;
+            } else {
+                colPos--;
+            }
         }
 
         return move;
@@ -568,7 +708,7 @@ public class txp150530sxp150830CopyAgent extends Agent {
     private int pathTo(int destR, int destC, boolean hasFlag) {
         int[][] best = new int[board.length][board.length];
         for (int i = 0; i < best.length; i++){
-            Arrays.fill(best[i], 1000);
+            Arrays.fill(best[i], 1000000);
         }
         State startState = new State(rowPos, colPos, 0);
         State endState = null;
@@ -583,35 +723,67 @@ public class txp150530sxp150830CopyAgent extends Agent {
             if (curr.r == destR && curr.c == destC) {
                 endState = curr;
             }
-            if (inBounds(curr.r+1, curr.c, board) && board[curr.r+1][curr.c] != 'W'
-                    && (defWasBlocked || ignoreMines || board[curr.r+1][curr.c] != 'M')
-                    && (hasFlag || board[curr.r+1][curr.c] != 'H')) {
-                int add = (hunting || board[curr.r+1][curr.c] != 'E') ? 1 : 100;
-                State next = new State(curr.r+1, curr.c, curr.count+add);
-                next.prev = curr;
-                queue.add(next);
-            }
             if (inBounds(curr.r, curr.c+1, board) && board[curr.r][curr.c+1] != 'W'
-                    && (defWasBlocked || ignoreMines || board[curr.r][curr.c+1] != 'M')
-                    && (hasFlag || board[curr.r][curr.c+1] != 'H')) {
-                int add = (hunting || board[curr.r][curr.c+1] != 'E') ? 1 : 100;
+                    && (hasFlag || curr.r != homeBaseRow || curr.c+1 != homeBaseCol)) {
+                int add = 1;
+                if (!hunting && board[curr.r][curr.c+1] == 'E') {
+                    add = 100;
+                }
+                if (board[curr.r][curr.c+1] == 'P') {
+                    add = 300;
+                }
+                if (!defWasBlocked && !ignoreMines && board[curr.r][curr.c+1] == 'M') {
+                    add = 800;
+                }
                 State next = new State(curr.r, curr.c+1, curr.count+add);
                 next.prev = curr;
                 queue.add(next);
             }
-            if (inBounds(curr.r-1, curr.c, board) && board[curr.r-1][curr.c] != 'W'
-                    && (defWasBlocked || ignoreMines || board[curr.r-1][curr.c] != 'M')
-                    && (hasFlag || board[curr.r-1][curr.c] != 'H')) {
-                int add = (hunting || board[curr.r-1][curr.c] != 'E') ? 1 : 100;
-                State next = new State(curr.r-1, curr.c, curr.count+add);
+            if (inBounds(curr.r, curr.c-1, board) && board[curr.r][curr.c-1] != 'W'
+                    && (hasFlag || curr.r != homeBaseRow || curr.c-1 != homeBaseCol)) {
+                int add = 1;
+                if (!hunting && board[curr.r][curr.c-1] == 'E') {
+                    add = 100;
+                }
+                if (board[curr.r][curr.c-1] == 'P') {
+                    add = 300;
+                }
+                if (!defWasBlocked && !ignoreMines && board[curr.r][curr.c-1] == 'M') {
+                    add = 800;
+                }
+                State next = new State(curr.r, curr.c-1, curr.count+add);
                 next.prev = curr;
                 queue.add(next);
             }
-            if (inBounds(curr.r, curr.c-1, board) && board[curr.r][curr.c-1] != 'W'
-                    && (defWasBlocked || ignoreMines || board[curr.r][curr.c-1] != 'M')
-                    && (hasFlag || board[curr.r][curr.c-1] != 'H')) {
-                int add = (hunting || board[curr.r][curr.c-1] != 'E') ? 1 : 100;
-                State next = new State(curr.r, curr.c-1, curr.count+add);
+            if (inBounds(curr.r+1, curr.c, board) && board[curr.r+1][curr.c] != 'W'
+                    && (hasFlag || curr.r+1 != homeBaseRow || curr.c != homeBaseCol)) {
+                int add = 1;
+                if (!hunting && board[curr.r+1][curr.c] == 'E') {
+                    add = 100;
+                }
+                if (board[curr.r+1][curr.c] == 'P') {
+                    add = 300;
+                }
+                if (!defWasBlocked && !ignoreMines && board[curr.r+1][curr.c] == 'M') {
+                    add = 800;
+                }
+                State next = new State(curr.r+1, curr.c, curr.count+add);
+                next.prev = curr;
+                queue.add(next);
+            }
+            if (inBounds(curr.r-1, curr.c, board) && board[curr.r-1][curr.c] != 'W'
+                    && (hasFlag || curr.r-1 != homeBaseRow || curr.c != homeBaseCol)) {
+                int add = 1;
+                if (!hunting && board[curr.r-1][curr.c] == 'E') {
+                    add = 100;
+                }
+                if (board[curr.r-1][curr.c] == 'P') {
+                    add = 300;
+                }
+                if (!defWasBlocked && !ignoreMines && board[curr.r-1][curr.c] == 'M') {
+                    add = 800;
+                }
+                State next = new State(curr.r-1, curr.c, curr.count+add);
                 next.prev = curr;
                 queue.add(next);
             }
@@ -641,8 +813,8 @@ public class txp150530sxp150830CopyAgent extends Agent {
     private boolean inBounds(int r, int c, char[][] mat) {
         return r >= 0 && r < mat.length && c >= 0 && c < mat[r].length;
     }
-	
-	private void update(AgentEnvironment env) {
+
+    private void update(AgentEnvironment env) {
         if (inBounds(rowPos, colPos-1, board)
                 && (board[rowPos][colPos-1] == '?' || board[rowPos][colPos-1] == 'E')) {
             if (env.isObstacleWestImmediate()) {
@@ -675,51 +847,92 @@ public class txp150530sxp150830CopyAgent extends Agent {
                 board[rowPos + 1][colPos] = '.';
             }
         }
-	}
-	
-	private boolean hasDied(AgentEnvironment env) {
-		if(baseOnLeft) {
-			if(isDefender) {
-				if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseWest(AgentEnvironment.OUR_TEAM, false)
+        if (!justPlantedMine) {
+            board[rowPos][colPos] = '.';
+        }
+        if (!validate(env)) {
+            System.out.println("*****");
+            System.out.println("INVALID LOCATION!!!");
+            System.out.println("*****");
+            System.out.println("Attacker previous locs:");
+            for (int[] ar : attacker.previous) {
+                System.out.println(Arrays.toString(ar));
+            }
+            System.out.println("Curr Pos: " + attacker.rowPos + "," + attacker.colPos);
+            System.out.println("Defender previous locs:");
+            for (int[] ar : defender.previous) {
+                System.out.println(Arrays.toString(ar));
+            }
+            System.out.println("Curr Pos: " + defender.rowPos + "," + defender.colPos);
+            throw new RuntimeException("Invalid location");
+        } else {
+            justPlantedMine = false;
+        }
+    }
+
+    private boolean validate(AgentEnvironment env) {
+        if (inBounds(rowPos, colPos-1, board) && env.isObstacleWestImmediate()
+                && board[rowPos][colPos-1] != 'W') {
+            return false;
+        }
+        if (inBounds(rowPos, colPos+1, board) && env.isObstacleEastImmediate()
+                && board[rowPos][colPos+1] != 'W') {
+            return false;
+        }
+        if (inBounds(rowPos-1, colPos, board) && env.isObstacleNorthImmediate()
+                && board[rowPos-1][colPos] != 'W') {
+            return false;
+        }
+        if (inBounds(rowPos+1, colPos, board) && env.isObstacleSouthImmediate()
+                && board[rowPos+1][colPos] != 'W') {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean hasDied(AgentEnvironment env) {
+        if(baseOnLeft) {
+            if(isDefender) {
+                if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseWest(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleNorthImmediate() && env.isObstacleWestImmediate()) {
-				    board[rowPos][colPos] = '.';
-					rowPos = 0;
-					colPos = 0;
-					return true;
-				}
-			}
-			else {
-				if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseWest(AgentEnvironment.OUR_TEAM, false)
+                    board[rowPos][colPos] = '.';
+                    rowPos = 0;
+                    colPos = 0;
+                    return true;
+                }
+            }
+            else {
+                if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseWest(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleSouthImmediate() && env.isObstacleWestImmediate()) {
                     board[rowPos][colPos] = '.';
-					rowPos = board.length - 1;
-					colPos = 0;
-					return true;
-				}
-			}
-		}
-		else {
-			if(isDefender) {
-				if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseEast(AgentEnvironment.OUR_TEAM, false)
+                    rowPos = board.length - 1;
+                    colPos = 0;
+                    return true;
+                }
+            }
+        }
+        else {
+            if(isDefender) {
+                if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseEast(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleNorthImmediate() && env.isObstacleEastImmediate()) {
                     board[rowPos][colPos] = '.';
-					rowPos = 0;
-					colPos = board.length - 1;
-					return true;
-				}
-			}
-			else {
-				if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseEast(AgentEnvironment.OUR_TEAM, false)
+                    rowPos = 0;
+                    colPos = board.length - 1;
+                    return true;
+                }
+            }
+            else {
+                if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseEast(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleSouthImmediate() && env.isObstacleEastImmediate()) {
                     board[rowPos][colPos] = '.';
-					rowPos = board.length - 1;
-					colPos = board.length - 1;
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+                    rowPos = board.length - 1;
+                    colPos = board.length - 1;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     private class State implements Comparable<State> {
 
@@ -734,6 +947,10 @@ public class txp150530sxp150830CopyAgent extends Agent {
 
         public int compareTo(State other) {
             return count - other.count;
+        }
+
+        public String toString() {
+            return String.format("(%d,%d) %d", r, c, count);
         }
     }
 }
