@@ -622,12 +622,15 @@ public class txp150530sxp150830Agent extends Agent {
         board[defender.rowPos][defender.colPos] = 'P';
         int e1r = -1, e1c = -1, e2r = -1, e2c = -1;
         char e1temp = '.', e2temp = '.';
+		
+		// Sees if an enemy agent is to the north
         if (env.isAgentNorth(AgentEnvironment.ENEMY_TEAM, true)) {
             System.out.println("Found enemy 1");
             e1r = rowPos-1;
             e1c = colPos;
             e1temp = board[e1r][e1c];
         }
+		// Sees if an enemy agent is to the south
         if (env.isAgentSouth(AgentEnvironment.ENEMY_TEAM, true)) {
             if (e1r == -1) {
                 System.out.println("Found enemy 1");
@@ -641,6 +644,7 @@ public class txp150530sxp150830Agent extends Agent {
                 e2temp = board[e2r][e2c];
             }
         }
+		// Sees if an enemy agent is to the east
         if (env.isAgentEast(AgentEnvironment.ENEMY_TEAM, true)) {
             if (e1r == -1) {
                 System.out.println("Found enemy 1");
@@ -654,6 +658,7 @@ public class txp150530sxp150830Agent extends Agent {
                 e2temp = board[e2r][e2c];
             }
         }
+		// Sees if an enemy agent is to the west
         if (env.isAgentWest(AgentEnvironment.ENEMY_TEAM, true)) {
             if (e1r == -1) {
                 System.out.println("Found enemy 1");
@@ -720,11 +725,11 @@ public class txp150530sxp150830Agent extends Agent {
      * @return integer of move type
      */
     private int pathTo(int destR, int destC, boolean hasFlag) {
-        int[][] best = new int[board.length][board.length];
-        for (int i = 0; i < best.length; i++){
+        int[][] best = new int[board.length][board.length]; // Array filled with numbers to determine shortest path to destination
+        for (int i = 0; i < best.length; i++){ //Fills initially with empty space moves
             Arrays.fill(best[i], 1000000);
         }
-        State startState = new State(rowPos, colPos, 0);
+        State startState = new State(rowPos, colPos, 0); //Current state of the agent
         State endState = null;
         PriorityQueue<State> queue = new PriorityQueue<>();
         queue.add(startState);
@@ -739,14 +744,14 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r, curr.c+1, board) && board[curr.r][curr.c+1] != 'W'
                     && (hasFlag || curr.r != homeBaseRow || curr.c+1 != homeBaseCol)) {
-                int add = 1;
-                if (!hunting && board[curr.r][curr.c+1] == 'E') {
+                int add = 1; // Keeps weights on less desireable paths
+                if (!hunting && board[curr.r][curr.c+1] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
-                if (board[curr.r][curr.c+1] == 'P') {
+                if (board[curr.r][curr.c+1] == 'P') { // Gives an allied agent a weight of 300
                     add = 300;
                 }
-                if (!defWasBlocked && !ignoreMines && board[curr.r][curr.c+1] == 'M') {
+                if (!defWasBlocked && !ignoreMines && board[curr.r][curr.c+1] == 'M') { // Gives mines a weight of 800
                     add = 800;
                 }
                 State next = new State(curr.r, curr.c+1, curr.count+add);
@@ -755,14 +760,14 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r, curr.c-1, board) && board[curr.r][curr.c-1] != 'W'
                     && (hasFlag || curr.r != homeBaseRow || curr.c-1 != homeBaseCol)) {
-                int add = 1;
-                if (!hunting && board[curr.r][curr.c-1] == 'E') {
+                int add = 1; // Keeps weights on less desireable paths
+                if (!hunting && board[curr.r][curr.c-1] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
-                if (board[curr.r][curr.c-1] == 'P') {
+                if (board[curr.r][curr.c-1] == 'P') { // Gives an allied agent a weight of 300
                     add = 300;
                 }
-                if (!defWasBlocked && !ignoreMines && board[curr.r][curr.c-1] == 'M') {
+                if (!defWasBlocked && !ignoreMines && board[curr.r][curr.c-1] == 'M') { // Gives mines a weight of 800
                     add = 800;
                 }
                 State next = new State(curr.r, curr.c-1, curr.count+add);
@@ -771,14 +776,14 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r+1, curr.c, board) && board[curr.r+1][curr.c] != 'W'
                     && (hasFlag || curr.r+1 != homeBaseRow || curr.c != homeBaseCol)) {
-                int add = 1;
-                if (!hunting && board[curr.r+1][curr.c] == 'E') {
+                int add = 1; // Keeps weights on less desireable paths
+                if (!hunting && board[curr.r+1][curr.c] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
-                if (board[curr.r+1][curr.c] == 'P') {
+                if (board[curr.r+1][curr.c] == 'P') { // Gives an allied agent a weight of 300
                     add = 300;
                 }
-                if (!defWasBlocked && !ignoreMines && board[curr.r+1][curr.c] == 'M') {
+                if (!defWasBlocked && !ignoreMines && board[curr.r+1][curr.c] == 'M') { // Gives mines a weight of 800
                     add = 800;
                 }
                 State next = new State(curr.r+1, curr.c, curr.count+add);
@@ -787,14 +792,14 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r-1, curr.c, board) && board[curr.r-1][curr.c] != 'W'
                     && (hasFlag || curr.r-1 != homeBaseRow || curr.c != homeBaseCol)) {
-                int add = 1;
-                if (!hunting && board[curr.r-1][curr.c] == 'E') {
+                int add = 1; // Keeps weights on less desireable paths
+                if (!hunting && board[curr.r-1][curr.c] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
-                if (board[curr.r-1][curr.c] == 'P') {
+                if (board[curr.r-1][curr.c] == 'P') { // Gives an allied agent a weight of 300
                     add = 300;
                 }
-                if (!defWasBlocked && !ignoreMines && board[curr.r-1][curr.c] == 'M') {
+                if (!defWasBlocked && !ignoreMines && board[curr.r-1][curr.c] == 'M') { // Gives mines a weight of 800
                     add = 800;
                 }
                 State next = new State(curr.r-1, curr.c, curr.count+add);
@@ -906,18 +911,22 @@ public class txp150530sxp150830Agent extends Agent {
      * @return boolean if position is not valid
      */
     private boolean validate(AgentEnvironment env) {
+		// Validate West
         if (inBounds(rowPos, colPos-1, board) && env.isObstacleWestImmediate()
                 && board[rowPos][colPos-1] != 'W') {
             return false;
         }
+		// Validate East
         if (inBounds(rowPos, colPos+1, board) && env.isObstacleEastImmediate()
                 && board[rowPos][colPos+1] != 'W') {
             return false;
         }
+		// Validate North
         if (inBounds(rowPos-1, colPos, board) && env.isObstacleNorthImmediate()
                 && board[rowPos-1][colPos] != 'W') {
             return false;
         }
+		// Validate South
         if (inBounds(rowPos+1, colPos, board) && env.isObstacleSouthImmediate()
                 && board[rowPos+1][colPos] != 'W') {
             return false;
@@ -932,8 +941,11 @@ public class txp150530sxp150830Agent extends Agent {
      * @return boolean if it has died
      */
     private boolean hasDied(AgentEnvironment env) {
+		// Home base on left
         if(baseOnLeft) {
+			// Defender
             if(isDefender) {
+				// Determines starting position by being in starting corner and above home base on same column
                 if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseWest(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleNorthImmediate() && env.isObstacleWestImmediate()) {
                     board[rowPos][colPos] = '.';
@@ -942,7 +954,9 @@ public class txp150530sxp150830Agent extends Agent {
                     return true;
                 }
             }
+			// Attacker
             else {
+				// Determines starting position by being in starting corner and below home base on same column
                 if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseWest(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleSouthImmediate() && env.isObstacleWestImmediate()) {
                     board[rowPos][colPos] = '.';
@@ -952,8 +966,11 @@ public class txp150530sxp150830Agent extends Agent {
                 }
             }
         }
+		// Home base on right
         else {
+			// Defender
             if(isDefender) {
+				// Determines starting position by being in starting corner and above home base on same column
                 if(env.isBaseSouth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseEast(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleNorthImmediate() && env.isObstacleEastImmediate()) {
                     board[rowPos][colPos] = '.';
@@ -962,7 +979,9 @@ public class txp150530sxp150830Agent extends Agent {
                     return true;
                 }
             }
+			// Attacker
             else {
+				// Determines starting position by being in starting corner and below home base on same column
                 if(env.isBaseNorth(AgentEnvironment.OUR_TEAM, false) && !env.isBaseEast(AgentEnvironment.OUR_TEAM, false)
                         && env.isObstacleSouthImmediate() && env.isObstacleEastImmediate()) {
                     board[rowPos][colPos] = '.';
