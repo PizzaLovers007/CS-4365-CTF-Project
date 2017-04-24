@@ -608,6 +608,13 @@ public class txp150530sxp150830Agent extends Agent {
         }
     }
 
+	/**
+     * Used to help update the map and see if a move is good before actually making the move
+     * @param env Interface for the agent environment
+	 * @param destR the row position of the destination
+	 * @param destC the column position of the destination
+     * @return integer of move type
+     */
     private int tryMove(AgentEnvironment env, int destR, int destC) {
         char defTemp = board[defender.rowPos][defender.colPos];
         char attTemp = board[attacker.rowPos][attacker.colPos];
@@ -705,6 +712,13 @@ public class txp150530sxp150830Agent extends Agent {
         return move;
     }
 
+	/**
+     * Uses the current known board to determine a path towards a destination
+     * @param destR the row position of the destination
+	 * @param destC the column position of the destination
+	 * @param hasFlag true if the agent has the flag
+     * @return integer of move type
+     */
     private int pathTo(int destR, int destC, boolean hasFlag) {
         int[][] best = new int[board.length][board.length];
         for (int i = 0; i < best.length; i++){
@@ -810,11 +824,23 @@ public class txp150530sxp150830Agent extends Agent {
         }
     }
 
+	/**
+     * Checks to see if a given move is within the bounds of the board
+     * @param r int of the row position
+	 * @param c int of the column position
+	 * @param mat char matrix containing the mapped out board
+     * @return integer of move type
+     */
     private boolean inBounds(int r, int c, char[][] mat) {
         return r >= 0 && r < mat.length && c >= 0 && c < mat[r].length;
     }
 
+	/**
+     * Updates the map based on the surroundings of the agent
+     * @param env Interface for the agent environment
+     */
     private void update(AgentEnvironment env) {
+		// Update postion to the west
         if (inBounds(rowPos, colPos-1, board)
                 && (board[rowPos][colPos-1] == '?' || board[rowPos][colPos-1] == 'E')) {
             if (env.isObstacleWestImmediate()) {
@@ -823,6 +849,7 @@ public class txp150530sxp150830Agent extends Agent {
                 board[rowPos][colPos - 1] = '.';
             }
         }
+		// Update position to the east
         if (inBounds(rowPos, colPos+1, board)
                 && (board[rowPos][colPos+1] == '?' || board[rowPos][colPos+1] == 'E')) {
             if (env.isObstacleEastImmediate()) {
@@ -831,6 +858,7 @@ public class txp150530sxp150830Agent extends Agent {
                 board[rowPos][colPos + 1] = '.';
             }
         }
+		// Update the position to the north
         if (inBounds(rowPos-1, colPos, board)
                 && (board[rowPos-1][colPos] == '?' || board[rowPos-1][colPos] == 'E')) {
             if (env.isObstacleNorthImmediate()) {
@@ -839,6 +867,7 @@ public class txp150530sxp150830Agent extends Agent {
                 board[rowPos - 1][colPos] = '.';
             }
         }
+		//Update the position to the south
         if (inBounds(rowPos+1, colPos, board)
                 && (board[rowPos+1][colPos] == '?' || board[rowPos+1][colPos] == 'E')) {
             if (env.isObstacleSouthImmediate()) {
@@ -847,6 +876,7 @@ public class txp150530sxp150830Agent extends Agent {
                 board[rowPos + 1][colPos] = '.';
             }
         }
+		// Update current position if a mine has been planted TODO
         if (!justPlantedMine) {
             board[rowPos][colPos] = '.';
         }
@@ -870,6 +900,11 @@ public class txp150530sxp150830Agent extends Agent {
         }
     }
 
+	/**
+     * Determines if the agent's actual position matches up with its supposed position
+     * @param env Interface for the agent environment
+     * @return boolean if position is not valid
+     */
     private boolean validate(AgentEnvironment env) {
         if (inBounds(rowPos, colPos-1, board) && env.isObstacleWestImmediate()
                 && board[rowPos][colPos-1] != 'W') {
@@ -890,6 +925,12 @@ public class txp150530sxp150830Agent extends Agent {
         return true;
     }
 
+	
+	/**
+     * Determines if the agent has died and resets its known position
+     * @param env Interface for the agent environment
+     * @return boolean if it has died
+     */
     private boolean hasDied(AgentEnvironment env) {
         if(baseOnLeft) {
             if(isDefender) {
