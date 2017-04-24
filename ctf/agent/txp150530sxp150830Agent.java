@@ -791,14 +791,15 @@ public class txp150530sxp150830Agent extends Agent {
         int move = pathTo(destR, destC, env.hasFlag());
         board[attacker.rowPos][attacker.colPos] = attTemp;
         board[defender.rowPos][defender.colPos] = defTemp;
-
+		
+		// Does not move if there is a friendly agent for a move, updates position if there is no agent
         if (move == AgentAction.MOVE_NORTH) {
             if (env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
                 return AgentAction.DO_NOTHING;
             } else {
                 rowPos--;
             }
-        } else if (move == AgentAction.MOVE_EAST) {
+        } else if (move == AgentAction.MOVE_EAST) { 
             if (env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
                 return AgentAction.DO_NOTHING;
             } else {
