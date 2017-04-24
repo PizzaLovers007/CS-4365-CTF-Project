@@ -822,7 +822,8 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
 	/**
-     * Uses the current known board to determine a path towards a destination.
+     * Uses the current known board to determine a path towards a destination. The
+     * search algorithm is UCS.
      * @param destR the row position of the destination
 	 * @param destC the column position of the destination
 	 * @param hasFlag true if the agent has the flag
@@ -848,7 +849,7 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r, curr.c+1, board) && board[curr.r][curr.c+1] != 'W'
                     && (hasFlag || curr.r != homeBaseRow || curr.c+1 != homeBaseCol)) {
-                int add = 1; // Keeps weights on less desireable paths
+                int add = 1; // Keeps weights on less desirable paths
                 if (!hunting && board[curr.r][curr.c+1] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
@@ -864,7 +865,7 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r, curr.c-1, board) && board[curr.r][curr.c-1] != 'W'
                     && (hasFlag || curr.r != homeBaseRow || curr.c-1 != homeBaseCol)) {
-                int add = 1; // Keeps weights on less desireable paths
+                int add = 1; // Keeps weights on less desirable paths
                 if (!hunting && board[curr.r][curr.c-1] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
@@ -880,7 +881,7 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r+1, curr.c, board) && board[curr.r+1][curr.c] != 'W'
                     && (hasFlag || curr.r+1 != homeBaseRow || curr.c != homeBaseCol)) {
-                int add = 1; // Keeps weights on less desireable paths
+                int add = 1; // Keeps weights on less desirable paths
                 if (!hunting && board[curr.r+1][curr.c] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
@@ -896,7 +897,7 @@ public class txp150530sxp150830Agent extends Agent {
             }
             if (inBounds(curr.r-1, curr.c, board) && board[curr.r-1][curr.c] != 'W'
                     && (hasFlag || curr.r-1 != homeBaseRow || curr.c != homeBaseCol)) {
-                int add = 1; // Keeps weights on less desireable paths
+                int add = 1; // Keeps weights on less desirable paths
                 if (!hunting && board[curr.r-1][curr.c] == 'E') { // Gives an enemy agent a weight of 100
                     add = 100;
                 }
@@ -985,7 +986,7 @@ public class txp150530sxp150830Agent extends Agent {
                 board[rowPos + 1][colPos] = '.';
             }
         }
-		// Update current position if a mine has been planted TODO
+		// Mark current space as empty
         if (!justPlantedMine) {
             board[rowPos][colPos] = '.';
         }
@@ -1098,10 +1099,14 @@ public class txp150530sxp150830Agent extends Agent {
         return false;
     }
 
+    /**
+     * Used in the search algorithm to hold the current search data
+     */
     private class State implements Comparable<State> {
 
-        int r, c, count;
-        State prev;
+        int r, c;  // Position
+        int count;  // Distance from start node
+        State prev;  // Previous state
 
         public State(int r, int c, int cnt) {
             this.r = r;
@@ -1109,6 +1114,7 @@ public class txp150530sxp150830Agent extends Agent {
             this.count = cnt;
         }
 
+        // Sort by distance from start node
         public int compareTo(State other) {
             return count - other.count;
         }
