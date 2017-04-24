@@ -18,7 +18,8 @@ public class txp150530sxp150830Agent extends Agent {
      * H = home base
      * F = enemy base
      * M = mine
-     * E = enemy
+     * E = enemy agent
+     * P = ally agent
      * ? = Unknown
      */
     static char[][] board;  // Holds the board data
@@ -194,16 +195,21 @@ public class txp150530sxp150830Agent extends Agent {
                 preKnownWalls.add(env.isObstacleWestImmediate());
             }
 
+            // Check if defender is directly above home base
             if (env.isBaseSouth(AgentEnvironment.OUR_TEAM, true)) {
                 defDidMoveDown = true;
+                // Check if attacker is waiting
                 if (attacker.attDidMoveUp) {
-                    System.out.println("Creating board from defender move");
+//                    System.out.println("Creating board from defender move");
+                    // Initialize board
                     int size = preKnownWalls.size() + attacker.preKnownWalls.size() + 1;
                     board = new char[size][size];
                     maxSteps = size * size * 2;
                     for (char[] ar : board) {
                         Arrays.fill(ar, '?');
                     }
+
+                    // Mark walls above base
                     for (int i = 0; i < preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[i][1] = preKnownWalls.get(i) ? 'W' : '.';
@@ -213,6 +219,8 @@ public class txp150530sxp150830Agent extends Agent {
                             board[i][size-1] = '.';
                         }
                     }
+
+                    // Mark home/enemy bases
                     if (baseOnLeft) {
                         board[preKnownWalls.size()][0] = 'H';
                         board[preKnownWalls.size()][size-1] = 'F';
@@ -220,6 +228,8 @@ public class txp150530sxp150830Agent extends Agent {
                         board[preKnownWalls.size()][size-1] = 'H';
                         board[preKnownWalls.size()][0] = 'F';
                     }
+
+                    // Mark walls below base
                     for (int i = 0; i < attacker.preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[size-i-1][1] = attacker.preKnownWalls.get(i) ? 'W' : '.';
@@ -229,10 +239,13 @@ public class txp150530sxp150830Agent extends Agent {
                             board[size-i-1][size-1] = '.';
                         }
                     }
+
+                    // Update states
                     attacker.attDidWaitForDef = true;
                     defDidWaitForAtt = true;
                     didPlaceInitialMine = true;
 
+                    // Set attacker/defender positions
                     rowPos = preKnownWalls.size()-1;
                     attacker.rowPos = board.length-attacker.preKnownWalls.size();
                     if (baseOnLeft) {
@@ -243,6 +256,7 @@ public class txp150530sxp150830Agent extends Agent {
                         attacker.colPos = board.length-1;
                     }
 
+                    // Set home/enemy base locations
                     homeBaseRow = preKnownWalls.size();
                     enemyBaseRow = preKnownWalls.size();
                     if (baseOnLeft) {
@@ -253,6 +267,7 @@ public class txp150530sxp150830Agent extends Agent {
                         enemyBaseCol = 0;
                     }
 
+                    // Place initial mine
                     board[rowPos][colPos] = 'M';
                     justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
@@ -261,10 +276,11 @@ public class txp150530sxp150830Agent extends Agent {
                 }
             }
 
+            // Still haven't reached home base, continue moving south
             return AgentAction.MOVE_SOUTH;
         }
 
-        // Update position if dead
+        // Update position and states if dead
         if (hasDied(env)) {
 //            System.out.println("Defender died!");
             defDidMoveToFlagFront = false;
@@ -433,7 +449,9 @@ public class txp150530sxp150830Agent extends Agent {
     public int attGetMove(AgentEnvironment env) {
 //        System.out.printf("%s %s %s %s%n", attDidMoveUp, attDidWaitForDef, didPlaceInitialMine, attDidMoveToEnemyBase);
         agentSteps++;
-        
+
+        // Avoid defender if the defender has the flag
+        // Blows itself up if can't move away
         if (env.hasFlag(AgentEnvironment.OUR_TEAM) && !env.hasFlag()) {
             if (env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
                 if (!env.isObstacleEastImmediate() && !env.isBaseEast(AgentEnvironment.OUR_TEAM, true)) {
@@ -498,23 +516,30 @@ public class txp150530sxp150830Agent extends Agent {
             }
         }
 
+        // Move up
         if (!attDidMoveUp) {
+            // Get if object directly to left/right
             if (baseOnLeft) {
                 preKnownWalls.add(env.isObstacleEastImmediate());
             } else {
                 preKnownWalls.add(env.isObstacleWestImmediate());
             }
 
+            // Check if attacker is directly below home base
             if (env.isBaseNorth(AgentEnvironment.OUR_TEAM, true)) {
                 attDidMoveUp = true;
+                // Check if defender is waiting
                 if (defender.defDidMoveDown) {
-                    System.out.println("Creating board from attacker move");
+//                    System.out.println("Creating board from attacker move");
+                    // Initialize board
                     int size = defender.preKnownWalls.size() + preKnownWalls.size() + 1;
                     board = new char[size][size];
                     maxSteps = size * size * 2;
                     for (char[] ar : board) {
                         Arrays.fill(ar, '?');
                     }
+
+                    // Mark walls above base
                     for (int i = 0; i < defender.preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[i][1] = defender.preKnownWalls.get(i) ? 'W' : '.';
@@ -524,6 +549,8 @@ public class txp150530sxp150830Agent extends Agent {
                             board[i][size - 1] = '.';
                         }
                     }
+
+                    // Mark home/enemy bases
                     if (baseOnLeft) {
                         board[defender.preKnownWalls.size()][0] = 'H';
                         board[defender.preKnownWalls.size()][size - 1] = 'F';
@@ -531,6 +558,8 @@ public class txp150530sxp150830Agent extends Agent {
                         board[defender.preKnownWalls.size()][size - 1] = 'H';
                         board[defender.preKnownWalls.size()][0] = 'F';
                     }
+
+                    // Mark walls below base
                     for (int i = 0; i < preKnownWalls.size(); i++) {
                         if (baseOnLeft) {
                             board[size - i - 1][1] = preKnownWalls.get(i) ? 'W' : '.';
@@ -540,10 +569,13 @@ public class txp150530sxp150830Agent extends Agent {
                             board[size - i - 1][size - 1] = '.';
                         }
                     }
+
+                    // Updates states
                     attDidWaitForDef = true;
                     defender.defDidWaitForAtt = true;
                     didPlaceInitialMine = true;
 
+                    // Set attacker/defender positions
                     defender.rowPos = defender.preKnownWalls.size()-1;
                     rowPos = board.length - preKnownWalls.size();
                     if (baseOnLeft) {
@@ -554,6 +586,7 @@ public class txp150530sxp150830Agent extends Agent {
                         defender.colPos = board.length - 1;
                     }
 
+                    // Set home/enemy base locations
                     homeBaseRow = defender.preKnownWalls.size();
                     enemyBaseRow = defender.preKnownWalls.size();
                     if (baseOnLeft) {
@@ -564,6 +597,7 @@ public class txp150530sxp150830Agent extends Agent {
                         enemyBaseCol = 0;
                     }
 
+                    // Place initial mine
                     board[rowPos][colPos] = 'M';
                     justPlantedMine = true;
                     return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
@@ -572,16 +606,20 @@ public class txp150530sxp150830Agent extends Agent {
                 }
             }
 
+            // Still haven't reached home base, continue moving north
             return AgentAction.MOVE_NORTH;
         }
 
+        // Update position and states if died
         if (hasDied(env)) {
-            System.out.println("Attacker died!");
+//            System.out.println("Attacker died!");
             attDidMoveToEnemyBase = false;
             defender.defDidMoveToFlagFront = false;
             previous.clear();
         }
+        // Update neighboring cells
         update(env);
+        // Kill self if calculated position is different from actual position
         if (!validate(env)) {
             if (!justPlantedMine) {
                 justPlantedMine = true;
@@ -591,20 +629,29 @@ public class txp150530sxp150830Agent extends Agent {
             return AgentAction.DO_NOTHING;
         }
 
+        // Keep track of previous moves
         if (!attDidMoveToEnemyBase) {
             previous.add(new int[]{rowPos, colPos});
             if (previous.size() > board.length/3) {
                 previous.remove();
             }
         }
+
+        // Wait for defender
         if (!attDidWaitForDef) {
             return AgentAction.DO_NOTHING;
-        } else if (!didPlaceInitialMine) {
+        }
+
+        // Place initial mine
+        if (!didPlaceInitialMine) {
             board[rowPos][colPos] = 'M';
             didPlaceInitialMine = true;
             justPlantedMine = true;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
-        } else if (!attDidMoveToEnemyBase) {
+        }
+
+        // Move to enemy base
+        if (!attDidMoveToEnemyBase) {
             int move = tryMove(env, enemyBaseRow, enemyBaseCol);
             if (rowPos == enemyBaseRow && colPos == enemyBaseCol) {
                 attDidMoveToEnemyBase = true;
@@ -617,48 +664,66 @@ public class txp150530sxp150830Agent extends Agent {
             }
             attStuck = false;
             return move;
-        } else if (!attDidPlaceMineLast) {
+        }
+
+        // Place mine every other turn (for boardsize/3 turns) if have flag
+        if (!attDidPlaceMineLast) {
             board[rowPos][colPos] = 'M';
             attDidPlaceMineLast = true;
             justPlantedMine = true;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
-        } else {
-            if (!env.hasFlag()) {
-                attDidMoveToEnemyBase = false;
-                attDidPlaceMineLast = false;
-                return AgentAction.DO_NOTHING;
-            }
-            int move;
-            if (previous.isEmpty()) {
-                move = tryMove(env, homeBaseRow, homeBaseCol);
-                if (move == AgentAction.DO_NOTHING) {
-                    move = tryMove(env, Math.max(0, homeBaseRow - 2), homeBaseCol);
-                    if (move == AgentAction.DO_NOTHING) {
-                        attStuck = true;
-                    }
-                }
-            } else {
-                int[] lastMove = previous.removeLast();
-                if (lastMove[0] < rowPos && !env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
-                    rowPos--;
-                    move = AgentAction.MOVE_NORTH;
-                } else if (lastMove[0] > rowPos && !env.isAgentSouth(AgentEnvironment.OUR_TEAM, true)) {
-                    rowPos++;
-                    move = AgentAction.MOVE_SOUTH;
-                } else if (lastMove[1] < colPos && !env.isAgentWest(AgentEnvironment.OUR_TEAM, true)) {
-                    colPos--;
-                    move = AgentAction.MOVE_WEST;
-                } else if (lastMove[1] > colPos && !env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
-                    colPos++;
-                    move = AgentAction.MOVE_EAST;
-                } else {
-                    move = AgentAction.DO_NOTHING;
-                }
-                attDidPlaceMineLast = false;
-            }
-            attStuck = false;
-            return move;
         }
+
+        // Died and lost flag, return to state "move to enemy base"
+        if (!env.hasFlag()) {
+            attDidMoveToEnemyBase = false;
+            attDidPlaceMineLast = false;
+            return AgentAction.DO_NOTHING;
+        }
+
+        int move;
+
+        // Check if still placing mines
+        if (previous.isEmpty()) {
+            // Done placing mines, try move to home base
+            move = tryMove(env, homeBaseRow, homeBaseCol);
+
+            // Home base path is blocked, try moving to 2 spaces north of home base
+            if (move == AgentAction.DO_NOTHING) {
+                move = tryMove(env, Math.max(0, homeBaseRow - 2), homeBaseCol);
+
+                // That move is blocked too, so do nothing and mark itself stuck
+                if (move == AgentAction.DO_NOTHING) {
+                    attStuck = true;
+                }
+            }
+        } else {
+            // Still placing mines
+            int[] lastMove = previous.removeLast();
+            attDidPlaceMineLast = false;
+
+            // Get direction of the last move
+            if (lastMove[0] < rowPos && !env.isAgentNorth(AgentEnvironment.OUR_TEAM, true)) {
+                rowPos--;
+                move = AgentAction.MOVE_NORTH;
+            } else if (lastMove[0] > rowPos && !env.isAgentSouth(AgentEnvironment.OUR_TEAM, true)) {
+                rowPos++;
+                move = AgentAction.MOVE_SOUTH;
+            } else if (lastMove[1] < colPos && !env.isAgentWest(AgentEnvironment.OUR_TEAM, true)) {
+                colPos--;
+                move = AgentAction.MOVE_WEST;
+            } else if (lastMove[1] > colPos && !env.isAgentEast(AgentEnvironment.OUR_TEAM, true)) {
+                colPos++;
+                move = AgentAction.MOVE_EAST;
+            } else {
+                attDidPlaceMineLast = true;
+                move = AgentAction.DO_NOTHING;
+            }
+        }
+
+        // Attacker can move, un-mark stuck
+        attStuck = false;
+        return move;
     }
 
 	/**
