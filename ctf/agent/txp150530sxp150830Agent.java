@@ -662,7 +662,7 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
 	/**
-     * Used to help update the map and see if a move is good before actually making the move
+     * Used to help update the map and see if a move is good before actually making the move.
      * @param env Interface for the agent environment
 	 * @param destR the row position of the destination
 	 * @param destC the column position of the destination
@@ -674,50 +674,42 @@ public class txp150530sxp150830Agent extends Agent {
         board[attacker.rowPos][attacker.colPos] = 'P';
         board[defender.rowPos][defender.colPos] = 'P';
         int e1r = -1, e1c = -1, e2r = -1, e2c = -1;
-        char e1temp = '.', e2temp = '.';
         if (env.isAgentNorth(AgentEnvironment.ENEMY_TEAM, true)) {
-            System.out.println("Found enemy 1");
+//            System.out.println("Found enemy 1");
             e1r = rowPos-1;
             e1c = colPos;
-            e1temp = board[e1r][e1c];
         }
         if (env.isAgentSouth(AgentEnvironment.ENEMY_TEAM, true)) {
             if (e1r == -1) {
-                System.out.println("Found enemy 1");
+//                System.out.println("Found enemy 1");
                 e1r = rowPos+1;
                 e1c = colPos;
-                e1temp = board[e1r][e1c];
             } else {
-                System.out.println("Found enemy 2");
+//                System.out.println("Found enemy 2");
                 e2r = rowPos+1;
                 e2c = colPos;
-                e2temp = board[e2r][e2c];
             }
         }
         if (env.isAgentEast(AgentEnvironment.ENEMY_TEAM, true)) {
             if (e1r == -1) {
-                System.out.println("Found enemy 1");
+//                System.out.println("Found enemy 1");
                 e1r = rowPos;
                 e1c = colPos+1;
-                e1temp = board[e1r][e1c];
             } else {
-                System.out.println("Found enemy 2");
+//                System.out.println("Found enemy 2");
                 e2r = rowPos;
                 e2c = colPos+1;
-                e2temp = board[e2r][e2c];
             }
         }
         if (env.isAgentWest(AgentEnvironment.ENEMY_TEAM, true)) {
             if (e1r == -1) {
-                System.out.println("Found enemy 1");
+//                System.out.println("Found enemy 1");
                 e1r = rowPos;
                 e1c = colPos-1;
-                e1temp = board[e1r][e1c];
             } else {
-                System.out.println("Found enemy 2");
+//                System.out.println("Found enemy 2");
                 e2r = rowPos;
                 e2c = colPos-1;
-                e2temp = board[e2r][e2c];
             }
         }
         if (e1r != -1) {
@@ -727,12 +719,6 @@ public class txp150530sxp150830Agent extends Agent {
             board[e2r][e2c] = 'E';
         }
         int move = pathTo(destR, destC, env.hasFlag());
-        if (e1r != -1) {
-//            board[e1r][e1c] = e1temp;
-        }
-        if (e2r != -1) {
-//            board[e2r][e2c] = e2temp;
-        }
         board[attacker.rowPos][attacker.colPos] = attTemp;
         board[defender.rowPos][defender.colPos] = defTemp;
 
@@ -766,7 +752,7 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
 	/**
-     * Uses the current known board to determine a path towards a destination
+     * Uses the current known board to determine a path towards a destination.
      * @param destR the row position of the destination
 	 * @param destC the column position of the destination
 	 * @param hasFlag true if the agent has the flag
@@ -856,29 +842,29 @@ public class txp150530sxp150830Agent extends Agent {
             }
         }
         if (endState == null || endState.prev == null) {
-            System.out.println("nowhere");
+//            System.out.println("nowhere");
             return AgentAction.DO_NOTHING;
         }
         while (endState.prev.prev != null) {
             endState = endState.prev;
         }
         if (endState.r > startState.r) {
-            System.out.println("south");
+//            System.out.println("south");
             return AgentAction.MOVE_SOUTH;
         } else if (endState.r < startState.r) {
-            System.out.println("north");
+//            System.out.println("north");
             return AgentAction.MOVE_NORTH;
         } else if (endState.c < startState.c) {
-            System.out.println("west");
+//            System.out.println("west");
             return AgentAction.MOVE_WEST;
         } else {
-            System.out.println("east");
+//            System.out.println("east");
             return AgentAction.MOVE_EAST;
         }
     }
 
 	/**
-     * Checks to see if a given move is within the bounds of the board
+     * Checks to see if a given move is within the bounds of the board.
      * @param r int of the row position
 	 * @param c int of the column position
 	 * @param mat char matrix containing the mapped out board
@@ -889,11 +875,11 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
 	/**
-     * Updates the map based on the surroundings of the agent
+     * Updates the map based on the surroundings of the agent.
      * @param env Interface for the agent environment
      */
     private void update(AgentEnvironment env) {
-		// Update postion to the west
+		// Update position to the west
         if (inBounds(rowPos, colPos-1, board)
                 && (board[rowPos][colPos-1] == '?' || board[rowPos][colPos-1] == 'E')) {
             if (env.isObstacleWestImmediate()) {
@@ -934,19 +920,19 @@ public class txp150530sxp150830Agent extends Agent {
             board[rowPos][colPos] = '.';
         }
         if (!validate(env)) {
-            System.out.println("*****");
-            System.out.println("INVALID LOCATION!!!");
-            System.out.println("*****");
-            System.out.println("Attacker previous locs:");
-            for (int[] ar : attacker.previous) {
-                System.out.println(Arrays.toString(ar));
-            }
-            System.out.println("Curr Pos: " + attacker.rowPos + "," + attacker.colPos);
-            System.out.println("Defender previous locs:");
-            for (int[] ar : defender.previous) {
-                System.out.println(Arrays.toString(ar));
-            }
-            System.out.println("Curr Pos: " + defender.rowPos + "," + defender.colPos);
+//            System.out.println("*****");
+//            System.out.println("INVALID LOCATION!!!");
+//            System.out.println("*****");
+//            System.out.println("Attacker previous locs:");
+//            for (int[] ar : attacker.previous) {
+//                System.out.println(Arrays.toString(ar));
+//            }
+//            System.out.println("Curr Pos: " + attacker.rowPos + "," + attacker.colPos);
+//            System.out.println("Defender previous locs:");
+//            for (int[] ar : defender.previous) {
+//                System.out.println(Arrays.toString(ar));
+//            }
+//            System.out.println("Curr Pos: " + defender.rowPos + "," + defender.colPos);
 //            throw new RuntimeException("Invalid location");
         } else {
             justPlantedMine = false;
@@ -954,7 +940,7 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
 	/**
-     * Determines if the agent's actual position matches up with its supposed position
+     * Determines if the agent's actual position matches up with its supposed position.
      * @param env Interface for the agent environment
      * @return boolean if position is not valid
      */
@@ -980,7 +966,7 @@ public class txp150530sxp150830Agent extends Agent {
 
 	
 	/**
-     * Determines if the agent has died and resets its known position
+     * Determines if the agent has died and resets its known position.
      * @param env Interface for the agent environment
      * @return boolean if it has died
      */
