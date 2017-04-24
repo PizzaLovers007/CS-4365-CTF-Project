@@ -734,6 +734,7 @@ public class txp150530sxp150830Agent extends Agent {
      * @return integer of move type
      */
     private int tryMove(AgentEnvironment env, int destR, int destC) {
+        // Temporarily mark ally agents on the board
         char defTemp = board[defender.rowPos][defender.colPos];
         char attTemp = board[attacker.rowPos][attacker.colPos];
         board[attacker.rowPos][attacker.colPos] = 'P';
@@ -782,13 +783,19 @@ public class txp150530sxp150830Agent extends Agent {
                 e2c = colPos-1;
             }
         }
+
+        // Mark board with enemy agents
         if (e1r != -1) {
             board[e1r][e1c] = 'E';
         }
         if (e2r != -1) {
             board[e2r][e2c] = 'E';
         }
+
+        // Get move on path to the destination
         int move = pathTo(destR, destC, env.hasFlag());
+
+        // Replace characters on attacker/defender positions
         board[attacker.rowPos][attacker.colPos] = attTemp;
         board[defender.rowPos][defender.colPos] = defTemp;
 		
@@ -835,19 +842,30 @@ public class txp150530sxp150830Agent extends Agent {
         for (int i = 0; i < best.length; i++){ //Fills initially with empty space moves
             Arrays.fill(best[i], 1000000);
         }
-        State startState = new State(rowPos, colPos, 0); //Current state of the agent
+        //Current state of the agent, start position for UCS
+        State startState = new State(rowPos, colPos, 0);
         State endState = null;
-        PriorityQueue<State> queue = new PriorityQueue<>();
+        PriorityQueue<State> queue = new PriorityQueue<>();  // Queue for UCS
         queue.add(startState);
+
+        // Search until queue is empty
         while (!queue.isEmpty()) {
             State curr = queue.remove();
+
+            // If already better path to curr, do not expand
             if (curr.count >= best[curr.r][curr.c]) {
                 continue;
             }
+
+            // Mark curr as best path
             best[curr.r][curr.c] = curr.count;
+
+            // If at goal, set end state to curr
             if (curr.r == destR && curr.c == destC) {
                 endState = curr;
             }
+
+            // Expand east move
             if (inBounds(curr.r, curr.c+1, board) && board[curr.r][curr.c+1] != 'W'
                     && (hasFlag || curr.r != homeBaseRow || curr.c+1 != homeBaseCol)) {
                 int add = 1; // Keeps weights on less desirable paths
@@ -864,6 +882,8 @@ public class txp150530sxp150830Agent extends Agent {
                 next.prev = curr;
                 queue.add(next);
             }
+
+            // Expand west move
             if (inBounds(curr.r, curr.c-1, board) && board[curr.r][curr.c-1] != 'W'
                     && (hasFlag || curr.r != homeBaseRow || curr.c-1 != homeBaseCol)) {
                 int add = 1; // Keeps weights on less desirable paths
@@ -880,6 +900,8 @@ public class txp150530sxp150830Agent extends Agent {
                 next.prev = curr;
                 queue.add(next);
             }
+
+            // Expand south move
             if (inBounds(curr.r+1, curr.c, board) && board[curr.r+1][curr.c] != 'W'
                     && (hasFlag || curr.r+1 != homeBaseRow || curr.c != homeBaseCol)) {
                 int add = 1; // Keeps weights on less desirable paths
@@ -896,6 +918,8 @@ public class txp150530sxp150830Agent extends Agent {
                 next.prev = curr;
                 queue.add(next);
             }
+
+            // Expand north move
             if (inBounds(curr.r-1, curr.c, board) && board[curr.r-1][curr.c] != 'W'
                     && (hasFlag || curr.r-1 != homeBaseRow || curr.c != homeBaseCol)) {
                 int add = 1; // Keeps weights on less desirable paths
@@ -913,13 +937,19 @@ public class txp150530sxp150830Agent extends Agent {
                 queue.add(next);
             }
         }
+
+        // Could not find path to destination, don't move
         if (endState == null || endState.prev == null) {
 //            System.out.println("nowhere");
             return AgentAction.DO_NOTHING;
         }
+
+        // Traverse back on path until reaching the 2nd position
         while (endState.prev.prev != null) {
             endState = endState.prev;
         }
+
+        // Return the move the agent should take to reach the 2nd position
         if (endState.r > startState.r) {
 //            System.out.println("south");
             return AgentAction.MOVE_SOUTH;
@@ -936,7 +966,7 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
 	/**
-     * Checks to see if a given move is within the bounds of the board.
+     * Checks to see if a given position is within the bounds of the board.
      * @param r int of the row position
 	 * @param c int of the column position
 	 * @param mat char matrix containing the mapped out board
@@ -1101,7 +1131,7 @@ public class txp150530sxp150830Agent extends Agent {
     }
 
     /**
-     * Used in the search algorithm to hold the current search data
+     * Used in the search algorithm to hold the current search data.
      */
     private class State implements Comparable<State> {
 
