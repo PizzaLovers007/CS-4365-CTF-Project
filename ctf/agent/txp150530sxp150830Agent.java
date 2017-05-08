@@ -632,7 +632,7 @@ public class txp150530sxp150830Agent extends Agent {
         // Keep track of previous moves
         if (!attDidMoveToEnemyBase) {
             previous.add(new int[]{rowPos, colPos});
-            if (previous.size() > board.length/3) {
+            if (previous.size() > 1) {
                 previous.remove();
             }
         }
@@ -666,7 +666,7 @@ public class txp150530sxp150830Agent extends Agent {
             return move;
         }
 
-        // Place mine every other turn (for boardsize/3 turns) if have flag
+        // Place mine every other turn (for 2 turns) if have flag
         if (!attDidPlaceMineLast) {
             board[rowPos][colPos] = 'M';
             attDidPlaceMineLast = true;
