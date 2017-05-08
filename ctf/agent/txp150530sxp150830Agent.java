@@ -12,6 +12,8 @@ import java.util.PriorityQueue;
 
 public class txp150530sxp150830Agent extends Agent {
 
+    static final int RETURN_MINES = 2;
+
     /**
      * W = wall
      * . = open space
@@ -51,6 +53,7 @@ public class txp150530sxp150830Agent extends Agent {
     boolean attDidMoveUp, attDidWaitForDef, attDidMoveToEnemyBase, attDidPlaceMineLast;
     boolean attStuck;  // True if the attacker cannot path to the enemy base
     LinkedList<int[]> previous = new LinkedList<>();  // Holds previous boardsize/3 moves
+    int returnMines;  // Place RETURN_MINES mines after getting the flag
 
     public txp150530sxp150830Agent() {
         // Dereference static variables when the game is reset, prevents old data
@@ -632,7 +635,7 @@ public class txp150530sxp150830Agent extends Agent {
         // Keep track of previous moves
         if (!attDidMoveToEnemyBase) {
             previous.add(new int[]{rowPos, colPos});
-            if (previous.size() > 1) {
+            if (previous.size() > board.length/3) {
                 previous.remove();
             }
         }
@@ -656,6 +659,7 @@ public class txp150530sxp150830Agent extends Agent {
             if (rowPos == enemyBaseRow && colPos == enemyBaseCol) {
                 attDidMoveToEnemyBase = true;
                 attDidPlaceMineLast = false;
+                returnMines = RETURN_MINES;
                 return move;
             }
             if (move == AgentAction.DO_NOTHING) {
@@ -671,6 +675,7 @@ public class txp150530sxp150830Agent extends Agent {
             board[rowPos][colPos] = 'M';
             attDidPlaceMineLast = true;
             justPlantedMine = true;
+            returnMines--;
             return AgentAction.PLANT_HYPERDEADLY_PROXIMITY_MINE;
         }
 
@@ -684,7 +689,7 @@ public class txp150530sxp150830Agent extends Agent {
         int move;
 
         // Check if still placing mines
-        if (previous.isEmpty()) {
+        if (returnMines <= 0) {
             // Done placing mines, try move to home base
             move = tryMove(env, homeBaseRow, homeBaseCol);
 
